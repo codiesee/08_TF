@@ -60,8 +60,19 @@
 	</ul>
 </div>
 <div id="info-anno" style="padding-left: 5px; width:240px; position:absolute; top:270px; left:10px; z-index: 90000; background-color: rgba(255, 255, 255, 0.75);"></div>
+<div id="legend" style="padding: 5px 10px; position:absolute; top:10px; left:10px; z-index: 90000; background-color: rgba(255, 255, 255, 0.9); border-radius: 4px; font-size: 11px; max-width: 200px;">
+	<strong>Legend</strong><br>
+	Bar height = relative time (taller = slower)<br>
+	Hover over bars for details
+</div>
 <div id="mapid" style="width: 100%; height: 400px;"></div>
-<div id="new-projects"  style="display: -webkit-inline-box; position: absolute; top:450px; left: 2.5%;"></div>
+<!-- Histogram Labels (positioned outside new-projects so they don't get cleared) -->
+<div id="histogram-labels" style="position: absolute; top: 450px; left: 2.5%; display: none;">
+	<div style="position: absolute; top: -20px; left: 0; font-weight: bold; font-size: 14px; color: #333;">📊 Performance by Rank (fastest → slowest)</div>
+	<div style="position: absolute; top: 205px; left: 0; font-weight: bold; font-size: 14px; color: #333;">📅 Performance by Date (earliest → latest)</div>
+	<div style="position: absolute; top: 480px; left: 0; font-weight: bold; font-size: 14px; color: #333;">🎂 Performance by Athlete Age (youngest → oldest)</div>
+</div>
+<div id="new-projects" style="display: -webkit-inline-box; position: absolute; top:450px; left: 2.5%;"></div>
 <div id="myProgress">
 	<div id="myBar">0%</div>
 </div>
@@ -307,10 +318,13 @@ function makeHistogram(recordArrayIn){
 
 function makeMoreStuff(){
 	console.log(highestTtl)
+	$("#histogram-labels").show(); // Show labels when data loads
 	var differenceDate = highestDate - lowestDate;
 	var differenceAge = highestAge - lowestAge;
 	var lines = 0;
 	var nextAge = 0;
+	var totalWidth = arrayArray.length * widthBar; // Total width of histogram
+	
 	for (f = 0; f < arrayArray.length; f++) {
 		lines++;
 		var recordArrayIn = arrayArray[f];
@@ -366,7 +380,59 @@ function makeMoreStuff(){
 		$someElement.offset({ top: (e.pageY - 100), left: (e.pageX + 25)});
 	})*/
 	mymap.addLayer(markers);
+	
+	// Generate X-axis labels
+	generateAxisLabels(totalWidth, differenceDate, differenceAge);
+	
 	loadingBar("OFF")
+}
+
+// Generate x-axis labels for all three histograms
+function generateAxisLabels(totalWidth, differenceDate, differenceAge) {
+	var labelStyle = 'position: absolute; font-size: 10px; color: #666; transform: rotate(-45deg); transform-origin: top left;';
+	
+	// --- RANK LABELS (Histogram 1) ---
+	var totalRecords = arrayArray.length;
+	var rankStep = Math.ceil(totalRecords / 10); // ~10 labels
+	for (var i = 0; i <= totalRecords; i += rankStep) {
+		var rank = i === 0 ? 1 : i;
+		var leftPos = (rank / totalRecords) * totalWidth;
+		var label = '<div class="axis-label" style="' + labelStyle + ' top: 205px; left: ' + leftPos + 'px;">#' + rank + '</div>';
+		$("#new-projects").append(label);
+	}
+	
+	// --- DATE LABELS (Histogram 2) ---
+	// Convert lowestDate/highestDate back to years
+	var lowestYear = Math.floor(lowestDate / (12 * 30));
+	var highestYear = Math.ceil(highestDate / (12 * 30));
+	var yearStep = Math.ceil((highestYear - lowestYear) / 10); // ~10 labels
+	if (yearStep < 1) yearStep = 1;
+	
+	for (var year = lowestYear; year <= highestYear; year += yearStep) {
+		var yearValue = year * (12 * 30);
+		var pct = (yearValue - lowestDate) / differenceDate;
+		if (pct >= 0 && pct <= 1) {
+			var leftPos = pct * totalWidth;
+			var label = '<div class="axis-label" style="' + labelStyle + ' top: 430px; left: ' + leftPos + 'px;">' + year + '</div>';
+			$("#new-projects").append(label);
+		}
+	}
+	
+	// --- AGE LABELS (Histogram 3) ---
+	var lowestAgeYears = Math.floor(lowestAge / (12 * 30));
+	var highestAgeYears = Math.ceil(highestAge / (12 * 30));
+	var ageStep = Math.ceil((highestAgeYears - lowestAgeYears) / 10);
+	if (ageStep < 1) ageStep = 1;
+	
+	for (var age = lowestAgeYears; age <= highestAgeYears; age += ageStep) {
+		var ageValue = age * (12 * 30);
+		var pct = (ageValue - lowestAge) / differenceAge;
+		if (pct >= 0 && pct <= 1) {
+			var leftPos = pct * totalWidth;
+			var label = '<div class="axis-label" style="' + labelStyle + ' top: 705px; left: ' + leftPos + 'px;">' + age + 'y</div>';
+			$("#new-projects").append(label);
+		}
+	}
 }
 function mouseoverKeyA(eDiv){
 	var eDivD3 = d3.select(eDiv) 
