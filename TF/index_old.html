@@ -1,0 +1,178 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>load demo</title>
+  <style>
+  body {
+    font-size: 12px;
+    font-family: Arial;
+  }
+  </style>
+  <script src="//code.jquery.com/jquery-1.11.1.min.js"></script>
+  <script type="text/javascript" src="https://cdnjs.cloudflare.com/ajax/libs/d3/3.5.16/d3.min.js" charset="utf-8"></script>
+</head>
+<body>
+
+<div id="info-anno" style="width:300px; position:absolute; top:20px; left:20px; z-index: 90000;"></div>
+<ol id="new-projects"  style="display: -webkit-inline-box; position: absolute; top:30px;"></ol>
+ 
+<script>
+var theAboveUrl = "https://query.yahooapis.com/v1/public/yql?q=select%20*%20from%20htmlstring%20where%20url%3D'http%3A%2F%2Fwww.alltime-athletics.com%2Fw_5000ok.htm'%20%20and%20xpath%3D'%2F%2Fpre'&format=json&diagnostics=true&env=store%3A%2F%2Fdatatables.org%2Falltableswithkeys&callback="
+$.get(theAboveUrl, function(response) { 
+	var bigString = ""
+	console.log(response)
+	//for (g = 0; g < response.query.results.pre.length; g++) {
+		bigString = bigString + (response.query.results.result/*.pre[g]*/);
+	//}
+	parseBigString(bigString)
+	makeMoreStuff()
+});
+
+function parseBigString(stringIn){
+	var lineArray = stringIn.split("\n")//.split("	");
+	for (g = 0; g < lineArray.length; g++) {
+		console.log(lineArray[g])
+		var lineParsed = lineArray[g].split("   ")
+		var paredArray = []
+		for (f = 0; f < lineParsed.length; f++) {
+			lineParsed[f] = $.trim(lineParsed[f]);
+			if(lineParsed[f] != ""){
+				paredArray.push(lineParsed[f])
+			}
+		}
+		if (typeof paredArray[1] !== 'undefined') {
+			if (g != 0){
+				makeHistogram(paredArray)
+			}
+		}
+	}
+}
+var lines = 0;
+var widthBar = 0.3;
+var arrayArray = []
+var highestDate = 0;
+var lowestDate = 999999999999999999999999;
+var highestTtl = 0;
+var lowestTtl = 999999999999999999999999;
+var highestAge = 0;
+var lowestAge = 999999999999999999999999;
+function makeHistogram(recordArrayIn){
+	lines++
+	var raw = recordArrayIn[1]
+	var min = raw.split(":")[0].replace(/[^\d\.]/g, '')
+	var sec_hds = (raw.split(":")[1]).split(".")
+	var sec = sec_hds[0].replace(/[^\d\.]/g, '')
+	var hds = sec_hds[1].replace(/[^\d\.]/g, '')
+	var true_hds = (hds).toString()
+	if(true_hds.length == 1){
+		true_hds = true_hds + "0"
+	}
+	var ttl = ((min * 60) * 60) + (sec * 100) + parseFloat(true_hds)
+	recordArrayIn.push(ttl);
+	var a2 = "S."+(recordArrayIn[4])+".F" // Had to hack in some strings because the function was interpreting this value as a computer number of sort
+	var r2 = "S."+(recordArrayIn[7])+".F" // ditto
+	var day_mth_yr_DOB = (a2.split("."))
+	var day_mth_yr = (r2.split("."))
+	var trueTimeValue = parseFloat(day_mth_yr[1]) + parseFloat(day_mth_yr[2] * 30) + parseFloat(day_mth_yr[3] * (12*30))
+	var trueAgeValue_DOB = parseFloat(day_mth_yr_DOB[1]) + parseFloat(day_mth_yr_DOB[2] * 30) + parseFloat(parseFloat("19" + day_mth_yr_DOB[3]) * (12*30))
+	var trueAgeValue = trueTimeValue - trueAgeValue_DOB
+	var trueAgeValueArray = (("S."+(trueAgeValue / (12*30))+".F").toString()).split(".")//.toFixed(3)
+	var trueAgeValue2 = trueAgeValueArray[1] +" Years " +  (((parseFloat("."+trueAgeValueArray[2])) * 365).toFixed(0)).toString() + " Days"
+	recordArrayIn.push(trueTimeValue)
+	if (ttl > highestTtl){
+		highestTtl = ttl; 
+	}
+	if (ttl < lowestTtl){
+		lowestTtl = ttl; 
+	}
+	if (trueAgeValue > highestAge){
+		highestAge = trueAgeValue; 
+	}
+	if (trueAgeValue < lowestAge){
+		lowestAge = trueAgeValue; 
+	}
+	if (trueTimeValue > highestDate){
+		highestDate = trueTimeValue; 
+	}
+	if (trueTimeValue < lowestDate){
+		lowestDate = trueTimeValue; 
+	}
+	recordArrayIn.push(trueAgeValue)
+	recordArrayIn.push(trueAgeValue2)
+	arrayArray.push(recordArrayIn)
+}
+
+function makeMoreStuff(){
+	var differenceDate = highestDate - lowestDate;
+	var differenceAge = highestAge - lowestAge;
+	var lines = 0;
+	for (f = 0; f < arrayArray.length; f++) {
+		lines++;
+		var recordArrayIn = arrayArray[f];
+		var x = parseFloat(recordArrayIn[9]);
+		var y = lowestDate;
+		var z = differenceDate;
+		var diffVarDate = (x - y)/z
+		var xAge = parseFloat(recordArrayIn[10]);
+		var yAge = lowestAge;
+		var zAge = differenceAge;
+		var diffVarAge = (xAge - yAge)/zAge
+		var ttl = parseFloat(recordArrayIn[8])
+		var heightPct = (ttl - lowestTtl)/(highestTtl - lowestTtl)
+		var heightMax = 200
+		var heightVal = heightMax * heightPct
+		var a = arrayArray.length;
+		var b = (widthBar - 0)//0.0000001)
+		var functionString = 'onmouseover="mouseoverKeyA(this)" onmouseout="mouseoutKeyA(this)"'
+		var leftVarDate = ((a * b) * diffVarDate)
+		var leftVarAge = ((a * b) * diffVarAge)
+		var statsString = 'id="'+ "R"+recordArrayIn[0] + '"' + 'time="'+ recordArrayIn[1] + '"' + 'athlete="'+ recordArrayIn[2] + '"' + 'eventDate="'+ recordArrayIn[7] + '"' + 'athleteAgeDOB="'+ recordArrayIn[11] + '"' + 'athleteAge="'+ recordArrayIn[4] + '"' + 'eventLocation="'+ recordArrayIn[6] + '"'
+		var htmlString = '<div ' + functionString + statsString + ' style="width:'+ widthBar +'px; position: absolute; top:' + (heightMax - heightVal) +'px; left:'+ (lines * (widthBar - 0.0000001)) +'px; height:'+ heightVal +'px; background-color:gray;"></div>'
+		$( "#new-projects" ).append( htmlString );
+		var htmlString2 = '<div ' + functionString + statsString + ' style="width:'+ widthBar +'px; position: absolute; top:' + ((heightMax - heightVal) + 225) +'px; left:'+ leftVarDate +'px; height:'+ heightVal +'px; background-color:gray;"></div>'
+		$( "#new-projects" ).append( htmlString2 );
+		var htmlString3 = '<div ' + functionString + statsString + ' style="width:'+ widthBar +'px; position: absolute; top:' + ((heightMax - heightVal) + 500) +'px; left:'+ leftVarAge +'px; height:'+ heightVal +'px; background-color:gray;"></div>'
+		$( "#new-projects" ).append( htmlString3 );
+		if (f === arrayArray.length -1){
+			var oneNormalizedYear = 365
+			var totalYears = (differenceDate / oneNormalizedYear)
+			console.log(totalYears)
+			var x2 = 365;
+			var y2 = lowestDate;
+			var z2 = differenceDate;
+			var diffLabelVarDate = (x2 - y2)/z2
+			var labelVarDate = ((a * b) * diffLabelVarDate)
+			var htmlLabel = '<div style="position: absolute; top:' + (235) +'px; left:'+ labelVarDate +'px;">'+"TEST"+'</div>'
+			$( "#new-projects" ).append( htmlLabel );
+		}
+	}
+	//var selectHeightMax = 200
+	//var selectLeftVar = ((a * b) * diffVarDate)
+	//var selectHtmlString2 = '<div style="width:'+ 2 +'px; position: absolute; top:' + (250) +'px; left:'+ 0 +'px; height:'+ selectHeightMax  +'px; background-color:blue;"></div>'
+	//$( "#new-projects" ).append( selectHtmlString2 );	
+	var $someElement = $("#info-anno"); 
+	$(document).mousemove(function(e) { 
+		$someElement.offset({ top: (e.pageY - 100), left: (e.pageX + 25)});
+	})
+}
+function mouseoverKeyA(eDiv){
+	//console.log(arrayArray)
+	var eDivD3 = d3.select(eDiv) 
+	var athlete = eDivD3.attr("athlete")
+	var time = eDivD3.attr("time")
+	var eDate = eDivD3.attr("eventDate")
+	var eLocation = eDivD3.attr("eventLocation")
+	var aAge = eDivD3.attr("athleteAge")
+	var aAgeDOB = eDivD3.attr("athleteAgeDOB")
+	var infoAnno = $( "#info-anno" );
+	infoAnno.html("Athlete: <b>" + athlete +"</b><br>" + time +"<br>" + eDate +"<br>" + eLocation +"<br>" + aAge +"<br>Age at date of event: " + aAgeDOB );
+}
+
+function mouseoutKeyA(eDiv){
+	//console.log(eDiv)
+}
+
+</script>
+</body>
+</html>
