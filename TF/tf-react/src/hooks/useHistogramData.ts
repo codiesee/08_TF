@@ -56,6 +56,13 @@ export function useRankHistogram(records: AthleteRecord[]): HistogramData {
 }
 
 /**
+ * Helper to extract year from dateValue (days format: year*360 + month*30 + day)
+ */
+function dateValueToYear(dateValue: number): number {
+  return Math.floor(dateValue / 360);
+}
+
+/**
  * Compute histogram data for date-based histogram
  */
 export function useDateHistogram(records: AthleteRecord[]): HistogramData {
@@ -64,9 +71,9 @@ export function useDateHistogram(records: AthleteRecord[]): HistogramData {
       return { bars: [], minValue: 0, maxValue: 0, valueRange: 0, labels: [] };
     }
 
-    // Filter for reasonable dates: 1950-2030 (in days format)
-    const MIN_DATE = 1950 * 12 * 30;
-    const MAX_DATE = 2030 * 12 * 30;
+    // Filter for reasonable dates: 1950-2030
+    const MIN_DATE = 1950 * 360;
+    const MAX_DATE = 2030 * 360;
     
     const validRecords = records.filter(r => 
       r.dateValue > MIN_DATE && r.dateValue < MAX_DATE
@@ -95,19 +102,23 @@ export function useDateHistogram(records: AthleteRecord[]): HistogramData {
         value: record.dateValue,
       }));
 
-    // Generate year labels
-    const minYear = Math.floor(minDate / (12 * 30));
-    const maxYear = Math.ceil(maxDate / (12 * 30));
-    const yearStep = Math.ceil((maxYear - minYear) / 10) || 1;
+    // Generate year labels based on actual min/max years in data
+    const minYear = dateValueToYear(minDate);
+    const maxYear = dateValueToYear(maxDate);
+    const yearSpan = maxYear - minYear;
+    const yearStep = Math.max(1, Math.ceil(yearSpan / 8));
     const labels: { value: number; position: number; label: string }[] = [];
 
-    for (let year = minYear; year <= maxYear; year += yearStep) {
-      const yearValue = year * (12 * 30);
+    // Round minYear down to nearest step
+    const startYear = Math.floor(minYear / yearStep) * yearStep;
+    
+    for (let year = startYear; year <= maxYear + yearStep; year += yearStep) {
+      const yearValue = year * 360;
       const position = ((yearValue - minDate) / dateRange) * 100;
-      if (position >= 0 && position <= 100) {
+      if (position >= -5 && position <= 105) {
         labels.push({
           value: year,
-          position,
+          position: Math.max(0, Math.min(100, position)),
           label: String(year),
         });
       }
@@ -126,9 +137,9 @@ export function useAgeHistogram(records: AthleteRecord[]): HistogramData {
       return { bars: [], minValue: 0, maxValue: 0, valueRange: 0, labels: [] };
     }
 
-    // Filter for reasonable athlete ages: 10-70 years (in days: 3600 - 25200)
-    const MIN_AGE_DAYS = 10 * 12 * 30;  // ~10 years
-    const MAX_AGE_DAYS = 70 * 12 * 30;  // ~70 years
+    // Filter for reasonable athlete ages: 10-70 years (360 days per year)
+    const MIN_AGE_DAYS = 10 * 360;
+    const MAX_AGE_DAYS = 70 * 360;
     
     const validRecords = records.filter(r => 
       r.ageValue > MIN_AGE_DAYS && r.ageValue < MAX_AGE_DAYS
@@ -157,19 +168,20 @@ export function useAgeHistogram(records: AthleteRecord[]): HistogramData {
         value: record.ageValue,
       }));
 
-    // Generate age labels
-    const minAgeYears = Math.floor(minAge / (12 * 30));
-    const maxAgeYears = Math.ceil(maxAge / (12 * 30));
-    const ageStep = Math.ceil((maxAgeYears - minAgeYears) / 10) || 1;
+    // Generate age labels (360 days per year)
+    const minAgeYears = Math.floor(minAge / 360);
+    const maxAgeYears = Math.ceil(maxAge / 360);
+    const ageStep = Math.max(1, Math.ceil((maxAgeYears - minAgeYears) / 8));
     const labels: { value: number; position: number; label: string }[] = [];
 
-    for (let age = minAgeYears; age <= maxAgeYears; age += ageStep) {
-      const ageValue = age * (12 * 30);
+    const startAge = Math.floor(minAgeYears / ageStep) * ageStep;
+    for (let age = startAge; age <= maxAgeYears + ageStep; age += ageStep) {
+      const ageValue = age * 360;
       const position = ((ageValue - minAge) / ageRange) * 100;
-      if (position >= 0 && position <= 100) {
+      if (position >= -5 && position <= 105) {
         labels.push({
           value: age,
-          position,
+          position: Math.max(0, Math.min(100, position)),
           label: `${age}y`,
         });
       }

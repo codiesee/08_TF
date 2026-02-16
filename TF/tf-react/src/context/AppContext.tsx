@@ -61,3 +61,9 @@ export function useHighlight() {
   
   return { highlightedRecordId, highlight };
 }
+
+// Hook to get just the highlighted record ID
+export function useHighlightedRecordId() {
+  const { highlightedRecordId } = useAppContext();
+  return highlightedRecordId;
+}

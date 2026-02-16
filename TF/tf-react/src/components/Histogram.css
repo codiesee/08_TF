@@ -25,15 +25,13 @@
   position: absolute;
   background-color: #888;
   min-width: 1px;
-  transition: background-color 0.05s ease;
   cursor: pointer;
 }
 
-.histogram-bar:hover,
 .histogram-bar.highlighted {
   background-color: #ff0 !important;
   z-index: 1000;
-  min-width: 2px;
+  min-width: 3px;
 }
 
 .histogram-axis {
@@ -49,7 +47,7 @@
   transform: rotate(-45deg);
   transform-origin: top left;
   white-space: nowrap;
-  margin-top: 5px;
+  margin-top: 25px;
 }
 
 /* Tooltip styles */

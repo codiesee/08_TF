@@ -15,3 +15,9 @@
 .leaflet-default-icon-path {
   background-image: url(https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon.png);
 }
+
+/* Highlighted marker styling */
+.highlighted-marker {
+  background: transparent;
+  border: none;
+}

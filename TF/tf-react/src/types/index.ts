@@ -1,6 +1,7 @@
 // Athletic record data types
 
 export interface AthleteRecord {
+  id: number;         // Unique identifier (index)
   rank: number;
   time: string;
   timeSeconds: number;

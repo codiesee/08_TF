@@ -12,7 +12,7 @@ export const InfoPanel: React.FC<InfoPanelProps> = memo(({ records }) => {
 
   const highlightedRecord = useMemo(() => {
     if (highlightedRecordId === null) return null;
-    return records.find(r => r.rank === highlightedRecordId);
+    return records.find(r => r.id === highlightedRecordId);
   }, [records, highlightedRecordId]);
 
   if (!highlightedRecord) {

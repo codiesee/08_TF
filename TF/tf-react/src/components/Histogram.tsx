@@ -10,8 +10,7 @@ interface HistogramBarProps {
   leftPercent: number;
   barWidth: number;
   isHighlighted: boolean;
-  onMouseEnter: (id: number) => void;
-  onMouseLeave: () => void;
+  onClick: (id: number) => void;
 }
 
 // Memoized bar component for performance
@@ -22,12 +21,11 @@ const HistogramBar = memo<HistogramBarProps>(({
   leftPercent,
   barWidth,
   isHighlighted,
-  onMouseEnter,
-  onMouseLeave,
+  onClick,
 }) => {
-  const handleMouseEnter = useCallback(() => {
-    onMouseEnter(record.rank);
-  }, [onMouseEnter, record.rank]);
+  const handleClick = useCallback(() => {
+    onClick(record.id);
+  }, [onClick, record.id]);
 
   return (
     <div
@@ -38,8 +36,7 @@ const HistogramBar = memo<HistogramBarProps>(({
         width: `${barWidth}%`,
         bottom: 0,
       }}
-      onMouseEnter={handleMouseEnter}
-      onMouseLeave={onMouseLeave}
+      onClick={handleClick}
       data-rank={record.rank}
       data-name={record.name}
       data-time={record.time}
@@ -54,7 +51,7 @@ const HistogramBar = memo<HistogramBarProps>(({
     prevProps.heightPercent === nextProps.heightPercent &&
     prevProps.leftPercent === nextProps.leftPercent &&
     prevProps.barWidth === nextProps.barWidth &&
-    prevProps.record.rank === nextProps.record.rank
+    prevProps.record.id === nextProps.record.id
   );
 });
 
@@ -85,29 +82,36 @@ export const Histogram: React.FC<HistogramProps> = memo(({
   // Calculate bar width based on number of bars
   const barWidth = bars.length > 0 ? Math.max(0.1, 100 / bars.length) : 1;
 
-  const handleMouseEnter = useCallback((id: number) => {
-    highlight(id);
-  }, [highlight]);
+  const handleClick = useCallback((id: number) => {
+    // Toggle: if clicking the same record, deselect it
+    if (highlightedRecordId === id) {
+      highlight(null);
+    } else {
+      highlight(id);
+    }
+  }, [highlight, highlightedRecordId]);
 
-  const handleMouseLeave = useCallback(() => {
-    highlight(null);
+  // Click on empty space clears selection
+  const handleBackgroundClick = useCallback((e: React.MouseEvent) => {
+    if (e.target === e.currentTarget) {
+      highlight(null);
+    }
   }, [highlight]);
 
   return (
     <div className={`histogram-container ${className}`}>
       <h3 className="histogram-title">{title}</h3>
-      <div className="histogram-chart" ref={containerRef}>
+      <div className="histogram-chart" ref={containerRef} onClick={handleBackgroundClick}>
         {bars.map((bar) => (
           <HistogramBar
-            key={`${bar.record.rank}-${bar.index}`}
+            key={bar.record.id}
             record={bar.record}
             index={bar.index}
             heightPercent={bar.heightPercent}
             leftPercent={bar.leftPercent}
             barWidth={barWidth}
-            isHighlighted={highlightedRecordId === bar.record.rank}
-            onMouseEnter={handleMouseEnter}
-            onMouseLeave={handleMouseLeave}
+            isHighlighted={highlightedRecordId === bar.record.id}
+            onClick={handleClick}
           />
         ))}
       </div>

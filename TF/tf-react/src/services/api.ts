@@ -43,7 +43,7 @@ function parseTimeToSeconds(timeStr: string): number {
 }
 
 /**
- * Parse date string to days since epoch
+ * Parse date string to days value (year*360 + month*30 + day)
  */
 function parseDateToDays(dateStr: string): number {
   if (!dateStr) return 0;
@@ -56,8 +56,8 @@ function parseDateToDays(dateStr: string): number {
   const month = parseInt(parts[1], 10);
   const year = parseInt(parts[2], 10);
   
-  // Convert to days (approximate)
-  return year * 12 * 30 + month * 30 + day;
+  // Convert to days (360 days per year for simple math)
+  return year * 360 + month * 30 + day;
 }
 
 /**
@@ -68,7 +68,7 @@ function calculateAge(birthDateStr: string, eventDateStr: string): { ageValue: n
   const eventDays = parseDateToDays(eventDateStr);
   
   const ageValue = eventDays - birthDays;
-  const ageYears = Math.floor(ageValue / (12 * 30));
+  const ageYears = Math.floor(ageValue / 360);
   
   return { ageValue, ageYears };
 }
@@ -89,6 +89,7 @@ function transformRecord(apiRecord: ApiRecord, index: number): AthleteRecord {
   const { ageValue, ageYears } = calculateAge(fullDob, apiRecord.date);
   
   return {
+    id: index,  // Unique identifier
     rank: parseInt(apiRecord.rank, 10) || index + 1,
     time: apiRecord.time,
     timeSeconds: parseTimeToSeconds(apiRecord.time),
