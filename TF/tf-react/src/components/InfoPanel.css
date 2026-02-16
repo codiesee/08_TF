@@ -1,0 +1,41 @@
+.info-panel {
+  background: rgba(255, 255, 255, 0.95);
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  padding: 10px 15px;
+  min-height: 100px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+.info-panel.active {
+  border-color: #ff0;
+  background: #ffffcc;
+}
+
+.info-placeholder {
+  color: #888;
+  font-style: italic;
+  text-align: center;
+  padding: 20px 0;
+}
+
+.info-row {
+  display: flex;
+  padding: 3px 0;
+  border-bottom: 1px solid rgba(0,0,0,0.05);
+}
+
+.info-row:last-child {
+  border-bottom: none;
+}
+
+.info-label {
+  font-weight: bold;
+  width: 100px;
+  color: #555;
+}
+
+.info-value {
+  flex: 1;
+  color: #222;
+}
