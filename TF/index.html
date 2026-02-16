@@ -67,7 +67,16 @@
 </div>
 <script>
 //Global vars...
-var configurations = [["Men's Marathon","'mmara'",600000],["Men's Half Marathon","'mhmara'",280000],["Men's 10,000","'m_10k'",140000],["Men's 5,000","'m_5000'",82000],["Men's 3,000","'m_3000'",47000],["Women's 5,000","'w_5000'",150000],["Women's 3,000","'w_3000'",199000]];
+// Updated event codes to match PHP API format (must match alltime-athletics.com URLs)
+var configurations = [
+	["Men's Marathon", "mmara", 600000],
+	["Men's Half Marathon", "mhmara", 280000],
+	["Men's 10,000", "m10000", 140000],
+	["Men's 5,000", "m_5000", 82000],
+	["Men's 3,000", "m_3000", 47000],
+	["Women's 5,000", "w_5000", 150000],
+	["Women's 3,000", "w_3000", 199000]
+];
 var cutOffValue = 500000;
 var lines = 0;
 var deviceWidth = ((window.innerWidth > 0) ? window.innerWidth : screen.width) * 0.95;
@@ -90,7 +99,7 @@ L.tileLayer('https://cartodb-basemaps-{s}.global.ssl.fastly.net/light_all/{z}/{x
 }).addTo(mymap);
 
 for (f = 0; f < configurations.length; f++){
-	$("#eventDropdown").append('<li><a class="li-event-selector" onClick="engageEvent('+ configurations[f][1] +','+  configurations[f][2] +')">' + configurations[f][0] + '</a></li>')
+	$("#eventDropdown").append('<li><a class="li-event-selector" onClick="engageEvent(\''+ configurations[f][1] +'\','+ configurations[f][2] +')">' + configurations[f][0] + '</a></li>')
 }
 
 function loadingBar(onOff){
@@ -107,13 +116,49 @@ function engageEvent(eventIn, cutOff){
 	cutOffValue = cutOff;
 	loadingBar("ON")
 	$("#new-projects").html("")
-	var theAboveUrl = "https://query.yahooapis.com/v1/public/yql?q=select%20*%20from%20htmlstring%20where%20url%3D'http%3A%2F%2Fwww.alltime-athletics.com%2F" + eventIn + "ok.htm'%20%20and%20xpath%3D'%2F%2Fpre'&format=json&diagnostics=true&env=store%3A%2F%2Fdatatables.org%2Falltableswithkeys&callback="
-	$.get(theAboveUrl, function(response) { 
-		var bigString = ""
-		bigString = bigString + (response.query.results.result);
-		parseBigString(bigString)
-		makeMoreStuff()
+	markers.clearLayers(); // Clear existing markers
+	
+	// NEW: Use our PHP API instead of Yahoo YQL
+	var apiUrl = "api/scraper.php?event=" + eventIn;
+	$.getJSON(apiUrl, function(response) { 
+		if (response.error) {
+			console.error("API Error:", response.error);
+			loadingBar("OFF");
+			return;
+		}
+		
+		// Convert API response to the format expected by parseBigString
+		var bigString = convertApiResponseToLegacyFormat(response.records);
+		parseBigString(bigString);
+		makeMoreStuff();
+	}).fail(function(jqXHR, textStatus, errorThrown) {
+		console.error("Failed to fetch data:", textStatus, errorThrown);
+		loadingBar("OFF");
 	});
+}
+
+// Convert new API JSON format to legacy string format for minimal code changes
+function convertApiResponseToLegacyFormat(records) {
+	var lines = [];
+	lines.push("HEADER LINE"); // Placeholder for header (skipped in parseBigString)
+	
+	for (var i = 0; i < records.length; i++) {
+		var r = records[i];
+		// Format: rank   time   athlete   country   dob   position   location   date
+		var line = [
+			r.rank || '',
+			r.time || '',
+			r.athlete || '',
+			r.country || '',
+			r.dob || '',
+			r.position || '',
+			r.location || '',
+			r.date || ''
+		].join('   ');
+		lines.push(line);
+	}
+	
+	return lines.join('\n');
 }
 
 var markers = L.markerClusterGroup();
