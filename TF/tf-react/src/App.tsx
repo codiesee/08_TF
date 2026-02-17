@@ -17,10 +17,10 @@ function App() {
     setError,
   } = useAppContext();
 
-  // Compute histogram data
-  const rankHistogram = useRankHistogram(records);
-  const dateHistogram = useDateHistogram(records);
-  const ageHistogram = useAgeHistogram(records);
+  // Compute histogram data (pass selectedEvent for height inversion logic)
+  const rankHistogram = useRankHistogram(records, selectedEvent);
+  const dateHistogram = useDateHistogram(records, selectedEvent);
+  const ageHistogram = useAgeHistogram(records, selectedEvent);
 
   // Handle event selection
   const handleEventChange = useCallback(async (eventCode: string) => {

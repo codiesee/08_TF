@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { AthleteRecord } from '../types';
+import { FIELD_EVENTS } from '../config/constants';
 
 interface HistogramData {
   bars: {
@@ -16,26 +17,38 @@ interface HistogramData {
 }
 
 /**
- * Compute histogram data for rank-based histogram (ordered by rank, height = time)
+ * Compute histogram data for rank-based histogram (ordered by rank, height = performance)
+ * For time events: inverted so faster (lower) times = taller bars
+ * For field events: higher values = taller bars (no inversion)
  */
-export function useRankHistogram(records: AthleteRecord[]): HistogramData {
+export function useRankHistogram(records: AthleteRecord[], eventCode: string = ''): HistogramData {
   return useMemo(() => {
     if (records.length === 0) {
       return { bars: [], minValue: 0, maxValue: 0, valueRange: 0, labels: [] };
     }
 
+    const isFieldEvent = FIELD_EVENTS.has(eventCode);
     const times = records.map(r => r.timeSeconds);
     const minTime = Math.min(...times);
     const maxTime = Math.max(...times);
     const timeRange = maxTime - minTime || 1;
 
-    const bars = records.map((record, index) => ({
-      record,
-      index,
-      heightPercent: ((record.timeSeconds - minTime) / timeRange) * 100,
-      leftPercent: (index / records.length) * 100,
-      value: record.timeSeconds,
-    }));
+    const bars = records.map((record, index) => {
+      // For field events: higher value = taller bar
+      // For time events: lower time = taller bar (inverted)
+      const normalizedHeight = (record.timeSeconds - minTime) / timeRange;
+      const heightPercent = isFieldEvent 
+        ? normalizedHeight * 100 
+        : (1 - normalizedHeight) * 100;
+      
+      return {
+        record,
+        index,
+        heightPercent,
+        leftPercent: (index / records.length) * 100,
+        value: record.timeSeconds,
+      };
+    });
 
     // Generate labels for ranks
     const totalRecords = records.length;
@@ -52,7 +65,7 @@ export function useRankHistogram(records: AthleteRecord[]): HistogramData {
     }
 
     return { bars, minValue: minTime, maxValue: maxTime, valueRange: timeRange, labels };
-  }, [records]);
+  }, [records, eventCode]);
 }
 
 /**
@@ -64,12 +77,16 @@ function dateValueToYear(dateValue: number): number {
 
 /**
  * Compute histogram data for date-based histogram
+ * For time events: inverted so faster times = taller bars
+ * For field events: higher values = taller bars
  */
-export function useDateHistogram(records: AthleteRecord[]): HistogramData {
+export function useDateHistogram(records: AthleteRecord[], eventCode: string = ''): HistogramData {
   return useMemo(() => {
     if (records.length === 0) {
       return { bars: [], minValue: 0, maxValue: 0, valueRange: 0, labels: [] };
     }
+
+    const isFieldEvent = FIELD_EVENTS.has(eventCode);
 
     // Filter for reasonable dates: 1950-2030
     const MIN_DATE = 1950 * 360;
@@ -94,13 +111,20 @@ export function useDateHistogram(records: AthleteRecord[]): HistogramData {
     const timeRange = maxTime - minTime || 1;
 
     const bars = validRecords
-      .map((record, index) => ({
-        record,
-        index,
-        heightPercent: ((record.timeSeconds - minTime) / timeRange) * 100,
-        leftPercent: ((record.dateValue - minDate) / dateRange) * 100,
-        value: record.dateValue,
-      }));
+      .map((record, index) => {
+        const normalizedHeight = (record.timeSeconds - minTime) / timeRange;
+        const heightPercent = isFieldEvent 
+          ? normalizedHeight * 100 
+          : (1 - normalizedHeight) * 100;
+        
+        return {
+          record,
+          index,
+          heightPercent,
+          leftPercent: ((record.dateValue - minDate) / dateRange) * 100,
+          value: record.dateValue,
+        };
+      });
 
     // Generate year labels based on actual min/max years in data
     const minYear = dateValueToYear(minDate);
@@ -125,17 +149,21 @@ export function useDateHistogram(records: AthleteRecord[]): HistogramData {
     }
 
     return { bars, minValue: minDate, maxValue: maxDate, valueRange: dateRange, labels };
-  }, [records]);
+  }, [records, eventCode]);
 }
 
 /**
  * Compute histogram data for age-based histogram
+ * For time events: inverted so faster times = taller bars
+ * For field events: higher values = taller bars
  */
-export function useAgeHistogram(records: AthleteRecord[]): HistogramData {
+export function useAgeHistogram(records: AthleteRecord[], eventCode: string = ''): HistogramData {
   return useMemo(() => {
     if (records.length === 0) {
       return { bars: [], minValue: 0, maxValue: 0, valueRange: 0, labels: [] };
     }
+
+    const isFieldEvent = FIELD_EVENTS.has(eventCode);
 
     // Filter for reasonable athlete ages: 10-70 years (360 days per year)
     const MIN_AGE_DAYS = 10 * 360;
@@ -160,13 +188,20 @@ export function useAgeHistogram(records: AthleteRecord[]): HistogramData {
     const timeRange = maxTime - minTime || 1;
 
     const bars = validRecords
-      .map((record, index) => ({
-        record,
-        index,
-        heightPercent: ((record.timeSeconds - minTime) / timeRange) * 100,
-        leftPercent: ((record.ageValue - minAge) / ageRange) * 100,
-        value: record.ageValue,
-      }));
+      .map((record, index) => {
+        const normalizedHeight = (record.timeSeconds - minTime) / timeRange;
+        const heightPercent = isFieldEvent 
+          ? normalizedHeight * 100 
+          : (1 - normalizedHeight) * 100;
+        
+        return {
+          record,
+          index,
+          heightPercent,
+          leftPercent: ((record.ageValue - minAge) / ageRange) * 100,
+          value: record.ageValue,
+        };
+      });
 
     // Generate age labels (360 days per year)
     const minAgeYears = Math.floor(minAge / 360);
@@ -188,5 +223,5 @@ export function useAgeHistogram(records: AthleteRecord[]): HistogramData {
     }
 
     return { bars, minValue: minAge, maxValue: maxAge, valueRange: ageRange, labels };
-  }, [records]);
+  }, [records, eventCode]);
 }

@@ -29,6 +29,7 @@ $CACHE_DURATION = 7 * 24 * 60 * 60; // 7 days in seconds
 
 // Event configurations: [display_name, url_code, cutoff_value]
 $EVENTS = [
+    // ============ MEN'S EVENTS ============
     // Sprints
     'm_100'   => ["Men's 100m", 'm_100', 1200],
     'm_200'   => ["Men's 200m", 'm_200', 2200],
@@ -50,24 +51,50 @@ $EVENTS = [
     'm20kw'   => ["Men's 20km Race Walk", 'm20kw', 520000],
     'm35kw'   => ["Men's 35km Race Walk", 'm35kw', 900000],
     'm50kw'   => ["Men's 50km Race Walk", 'm50kw', 1350000],
-    // Field Events - Jumps (cutoff is distance in cm * 100)
+    // Field Events - Jumps
     'mhigh'   => ["Men's High Jump", 'mhigh', 230],
     'mpole'   => ["Men's Pole Vault", 'mpole', 590],
     'mlong'   => ["Men's Long Jump", 'mlong', 860],
     'mtrip'   => ["Men's Triple Jump", 'mtrip', 1760],
-    // Field Events - Throws (cutoff is distance in cm * 10)
+    // Field Events - Throws
     'mshot'   => ["Men's Shot Put", 'mshot', 2150],
     'mdisc'   => ["Men's Discus", 'mdisc', 7000],
     'mhamm'   => ["Men's Hammer Throw", 'mhamm', 8000],
     'mjave'   => ["Men's Javelin", 'mjave', 9100],
-    // Combined Events (cutoff is points)
+    // Combined Events
     'mdeca'   => ["Men's Decathlon", 'mdeca', 8500],
-    // Women's Events
-    'w_3000'  => ["Women's 3,000m", 'w_3000', 199000],
-    'w_5000'  => ["Women's 5,000m", 'w_5000', 150000],
-    'w10000'  => ["Women's 10,000m", 'w10000', 160000],
+    
+    // ============ WOMEN'S EVENTS ============
+    // Sprints
+    'w_100'   => ["Women's 100m", 'w_100', 1300],
+    'w_200'   => ["Women's 200m", 'w_200', 2400],
+    'w_400'   => ["Women's 400m", 'w_400', 5500],
+    'w_100h'  => ["Women's 100m Hurdles", 'w_100h', 1400],
+    'w_400h'  => ["Women's 400m Hurdles", 'w_400h', 5700],
+    // Middle Distance
+    'w_800'   => ["Women's 800m", 'w_800', 13500],
+    'w_1500'  => ["Women's 1500m", 'w_1500', 27000],
+    'w_mile'  => ["Women's Mile", 'w_mile', 29000],
+    // Long Distance
+    'w_3000'  => ["Women's 3,000m", 'w_3000', 55000],
+    'w3000h'  => ["Women's 3,000m Steeplechase", 'w3000h', 60000],
+    'w_5000'  => ["Women's 5,000m", 'w_5000', 95000],
+    'w10000'  => ["Women's 10,000m", 'w10000', 190000],
     'whmara'  => ["Women's Half Marathon", 'whmara', 320000],
-    'wmara'   => ["Women's Marathon", 'wmara', 700000],
+    'wmara'   => ["Women's Marathon", 'wmara', 840000],
+    // Race Walks
+    'w20kw'   => ["Women's 20km Race Walk", 'w20kw', 600000],
+    'w35kw'   => ["Women's 35km Race Walk", 'w35kw', 1050000],
+    // Field Events - Jumps
+    'whigh'   => ["Women's High Jump", 'whigh', 200],
+    'wpole'   => ["Women's Pole Vault", 'wpole', 480],
+    'wlong'   => ["Women's Long Jump", 'wlong', 720],
+    'wtrip'   => ["Women's Triple Jump", 'wtrip', 1480],
+    // Field Events - Throws
+    'wshot'   => ["Women's Shot Put", 'wshot', 2000],
+    'wdisc'   => ["Women's Discus", 'wdisc', 7000],
+    'whamm'   => ["Women's Hammer Throw", 'whamm', 7500],
+    'wjave'   => ["Women's Javelin", 'wjave', 6500],
 ];
 
 // Ensure cache directory exists
