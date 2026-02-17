@@ -3,6 +3,87 @@ import { AthleteRecord } from '../types';
 import { useHighlight } from '../context/AppContext';
 import './AthleteSearch.css';
 
+// Country code to full name mapping
+const COUNTRY_NAMES: Record<string, string[]> = {
+  'USA': ['united states', 'america', 'american', 'us'],
+  'GBR': ['great britain', 'united kingdom', 'uk', 'britain', 'british', 'england', 'english'],
+  'KEN': ['kenya', 'kenyan'],
+  'ETH': ['ethiopia', 'ethiopian'],
+  'JAM': ['jamaica', 'jamaican'],
+  'JPN': ['japan', 'japanese'],
+  'GER': ['germany', 'german', 'deutschland'],
+  'FRA': ['france', 'french'],
+  'ITA': ['italy', 'italian'],
+  'ESP': ['spain', 'spanish'],
+  'CAN': ['canada', 'canadian'],
+  'AUS': ['australia', 'australian'],
+  'NZL': ['new zealand', 'kiwi'],
+  'RSA': ['south africa', 'south african'],
+  'CHN': ['china', 'chinese'],
+  'RUS': ['russia', 'russian'],
+  'BRA': ['brazil', 'brazilian'],
+  'MEX': ['mexico', 'mexican'],
+  'NED': ['netherlands', 'dutch', 'holland'],
+  'BEL': ['belgium', 'belgian'],
+  'SWE': ['sweden', 'swedish'],
+  'NOR': ['norway', 'norwegian'],
+  'DEN': ['denmark', 'danish'],
+  'FIN': ['finland', 'finnish'],
+  'POL': ['poland', 'polish'],
+  'UKR': ['ukraine', 'ukrainian'],
+  'IRL': ['ireland', 'irish'],
+  'POR': ['portugal', 'portuguese'],
+  'MAR': ['morocco', 'moroccan'],
+  'TUN': ['tunisia', 'tunisian'],
+  'ALG': ['algeria', 'algerian'],
+  'UGA': ['uganda', 'ugandan'],
+  'TAN': ['tanzania', 'tanzanian'],
+  'ERI': ['eritrea', 'eritrean'],
+  'SOM': ['somalia', 'somali'],
+  'BRN': ['bahrain', 'bahraini'],
+  'QAT': ['qatar', 'qatari'],
+  'TUR': ['turkey', 'turkish'],
+  'IND': ['india', 'indian'],
+  'PAK': ['pakistan', 'pakistani'],
+  'BAN': ['bangladesh', 'bangladeshi'],
+  'SUI': ['switzerland', 'swiss'],
+  'AUT': ['austria', 'austrian'],
+  'CZE': ['czech', 'czechia', 'czech republic'],
+  'HUN': ['hungary', 'hungarian'],
+  'ROM': ['romania', 'romanian'],
+  'BUL': ['bulgaria', 'bulgarian'],
+  'GRE': ['greece', 'greek'],
+  'SRB': ['serbia', 'serbian'],
+  'CRO': ['croatia', 'croatian'],
+  'SLO': ['slovenia', 'slovenian'],
+  'SVK': ['slovakia', 'slovak'],
+  'BLR': ['belarus', 'belarusian'],
+  'LTU': ['lithuania', 'lithuanian'],
+  'LAT': ['latvia', 'latvian'],
+  'EST': ['estonia', 'estonian'],
+};
+
+// Build reverse lookup: name -> code
+const NAME_TO_CODE: Record<string, string> = {};
+Object.entries(COUNTRY_NAMES).forEach(([code, names]) => {
+  names.forEach(name => {
+    NAME_TO_CODE[name] = code;
+  });
+});
+
+// Function to check if a search term matches a country code
+function matchesCountry(countryCode: string, searchTerm: string): boolean {
+  const term = searchTerm.toLowerCase();
+  // Direct code match
+  if (countryCode.toLowerCase().includes(term)) return true;
+  // Check if search term matches any name for this country
+  const names = COUNTRY_NAMES[countryCode];
+  if (names) {
+    return names.some(name => name.includes(term));
+  }
+  return false;
+}
+
 interface AthleteSearchProps {
   records: AthleteRecord[];
 }
@@ -33,21 +114,39 @@ export const AthleteSearch: React.FC<AthleteSearchProps> = ({ records }) => {
       .sort((a, b) => a.name.localeCompare(b.name));
   }, [records]);
 
-  // Filter athletes based on search term
+  // Check if search term is primarily a country search
+  const isCountrySearch = useMemo(() => {
+    const trimmed = searchTerm.trim().toLowerCase();
+    if (!trimmed) return false;
+    // Check if term matches any country code or name
+    if (Object.keys(COUNTRY_NAMES).some(code => code.toLowerCase().includes(trimmed))) return true;
+    if (Object.keys(NAME_TO_CODE).some(name => name.includes(trimmed))) return true;
+    return false;
+  }, [searchTerm]);
+
+  // Filter athletes based on search term (searches name and country with full name lookup)
   const filteredAthletes = useMemo(() => {
     const trimmed = searchTerm.trim();
     if (!trimmed) return [];
     
     const term = trimmed.toLowerCase();
-    const matches = athleteOptions
-      .filter(athlete => athlete.name.toLowerCase().includes(term));
+    let matches = athleteOptions
+      .filter(athlete => 
+        athlete.name.toLowerCase().includes(term) ||
+        matchesCountry(athlete.fastestRecord.country, term)
+      );
+    
+    // If it's a country search, sort by fastest time
+    if (isCountrySearch) {
+      matches = matches.sort((a, b) => a.fastestRecord.timeSeconds - b.fastestRecord.timeSeconds);
+    }
     
     // Remove limit after 3+ characters entered
     if (trimmed.length >= 3) {
       return matches;
     }
     return matches.slice(0, 10);
-  }, [athleteOptions, searchTerm]);
+  }, [athleteOptions, searchTerm, isCountrySearch]);
 
   // Handle input change
   const handleInputChange = useCallback((e: React.ChangeEvent<HTMLInputElement>) => {
@@ -127,7 +226,7 @@ export const AthleteSearch: React.FC<AthleteSearchProps> = ({ records }) => {
           ref={inputRef}
           type="text"
           className="search-input"
-          placeholder="Type athlete name..."
+          placeholder="Name or country..."
           value={searchTerm}
           onChange={handleInputChange}
           onKeyDown={handleKeyDown}
@@ -149,7 +248,10 @@ export const AthleteSearch: React.FC<AthleteSearchProps> = ({ records }) => {
               onClick={() => handleSelectAthlete(athlete)}
               onMouseEnter={() => setSelectedIndex(index)}
             >
-              <span className="athlete-name">{athlete.name}</span>
+              <div className="athlete-info">
+                <span className="athlete-name">{athlete.name}</span>
+                <span className="athlete-country">{athlete.fastestRecord.country}</span>
+              </div>
               <span className="athlete-time">{athlete.fastestRecord.time}</span>
             </div>
           ))}

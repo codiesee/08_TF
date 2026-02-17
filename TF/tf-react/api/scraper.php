@@ -29,16 +29,45 @@ $CACHE_DURATION = 7 * 24 * 60 * 60; // 7 days in seconds
 
 // Event configurations: [display_name, url_code, cutoff_value]
 $EVENTS = [
-    'mmara'   => ["Men's Marathon", 'mmara', 600000],
-    'mhmara'  => ["Men's Half Marathon", 'mhmara', 280000],
-    'm10000'  => ["Men's 10,000m", 'm10000', 140000],
-    'm_5000'  => ["Men's 5,000m", 'm_5000', 82000],
+    // Sprints
+    'm_100'   => ["Men's 100m", 'm_100', 1200],
+    'm_200'   => ["Men's 200m", 'm_200', 2200],
+    'm_400'   => ["Men's 400m", 'm_400', 5000],
+    'm_110h'  => ["Men's 110m Hurdles", 'm_110h', 1500],
+    'm_400h'  => ["Men's 400m Hurdles", 'm_400h', 5200],
+    // Middle Distance
+    'm_800'   => ["Men's 800m", 'm_800', 12000],
+    'm_1500'  => ["Men's 1500m", 'm_1500', 24000],
+    'm_mile'  => ["Men's Mile", 'm_mile', 26000],
+    // Long Distance
     'm_3000'  => ["Men's 3,000m", 'm_3000', 47000],
-    'wmara'   => ["Women's Marathon", 'wmara', 700000],
-    'whmara'  => ["Women's Half Marathon", 'whmara', 320000],
-    'w10000'  => ["Women's 10,000m", 'w10000', 160000],
-    'w_5000'  => ["Women's 5,000m", 'w_5000', 150000],
+    'm3000h'  => ["Men's 3,000m Steeplechase", 'm3000h', 52000],
+    'm_5000'  => ["Men's 5,000m", 'm_5000', 82000],
+    'm10000'  => ["Men's 10,000m", 'm10000', 140000],
+    'mhmara'  => ["Men's Half Marathon", 'mhmara', 280000],
+    'mmara'   => ["Men's Marathon", 'mmara', 600000],
+    // Race Walks
+    'm20kw'   => ["Men's 20km Race Walk", 'm20kw', 520000],
+    'm35kw'   => ["Men's 35km Race Walk", 'm35kw', 900000],
+    'm50kw'   => ["Men's 50km Race Walk", 'm50kw', 1350000],
+    // Field Events - Jumps (cutoff is distance in cm * 100)
+    'mhigh'   => ["Men's High Jump", 'mhigh', 230],
+    'mpole'   => ["Men's Pole Vault", 'mpole', 590],
+    'mlong'   => ["Men's Long Jump", 'mlong', 860],
+    'mtrip'   => ["Men's Triple Jump", 'mtrip', 1760],
+    // Field Events - Throws (cutoff is distance in cm * 10)
+    'mshot'   => ["Men's Shot Put", 'mshot', 2150],
+    'mdisc'   => ["Men's Discus", 'mdisc', 7000],
+    'mhamm'   => ["Men's Hammer Throw", 'mhamm', 8000],
+    'mjave'   => ["Men's Javelin", 'mjave', 9100],
+    // Combined Events (cutoff is points)
+    'mdeca'   => ["Men's Decathlon", 'mdeca', 8500],
+    // Women's Events
     'w_3000'  => ["Women's 3,000m", 'w_3000', 199000],
+    'w_5000'  => ["Women's 5,000m", 'w_5000', 150000],
+    'w10000'  => ["Women's 10,000m", 'w10000', 160000],
+    'whmara'  => ["Women's Half Marathon", 'whmara', 320000],
+    'wmara'   => ["Women's Marathon", 'wmara', 700000],
 ];
 
 // Ensure cache directory exists
@@ -121,20 +150,39 @@ function parseHtml($html) {
             return trim($p) !== ''; 
         }));
         
-        // We need at least 8 fields: rank, time, athlete, country, dob, position, location, date
+        // We need at least 8 fields: rank, time, [wind], athlete, country, dob, position, location, date
         if (count($parts) >= 8) {
             // Validate that first field looks like a rank number
             if (!preg_match('/^\d+$/', trim($parts[0]))) continue;
             
+            // Check if field 2 is a wind reading (starts with +, -, ± or is a small decimal like 0.0)
+            $hasWind = false;
+            $windValue = '';
+            $potentialWind = trim($parts[2]);
+            // Match wind patterns: +0.9, -1.2, ±0.0, 0.0, +1.5, etc.
+            // Use unicode-aware matching for ± symbol
+            if (count($parts) >= 9 && preg_match('/^[+\-\x{00B1}]?\d*\.?\d+$/u', $potentialWind)) {
+                // Also check it's a reasonable wind value (typically -5 to +5)
+                $numericWind = floatval(preg_replace('/[^0-9.\-]/', '', $potentialWind));
+                if (abs($numericWind) <= 10) {
+                    $hasWind = true;
+                    $windValue = $potentialWind;
+                }
+            }
+            
+            // Adjust indices based on whether wind is present
+            $offset = $hasWind ? 1 : 0;
+            
             $records[] = [
                 'rank' => isset($parts[0]) ? trim($parts[0]) : '',
                 'time' => isset($parts[1]) ? trim($parts[1]) : '',
-                'athlete' => isset($parts[2]) ? trim($parts[2]) : '',
-                'country' => isset($parts[3]) ? trim($parts[3]) : '',
-                'dob' => isset($parts[4]) ? trim($parts[4]) : '',
-                'position' => isset($parts[5]) ? trim($parts[5]) : '',
-                'location' => isset($parts[6]) ? trim($parts[6]) : '',
-                'date' => isset($parts[7]) ? trim($parts[7]) : ''
+                'wind' => $windValue,
+                'athlete' => isset($parts[2 + $offset]) ? trim($parts[2 + $offset]) : '',
+                'country' => isset($parts[3 + $offset]) ? trim($parts[3 + $offset]) : '',
+                'dob' => isset($parts[4 + $offset]) ? trim($parts[4 + $offset]) : '',
+                'position' => isset($parts[5 + $offset]) ? trim($parts[5 + $offset]) : '',
+                'location' => isset($parts[6 + $offset]) ? trim($parts[6 + $offset]) : '',
+                'date' => isset($parts[7 + $offset]) ? trim($parts[7 + $offset]) : ''
             ];
         }
     }
