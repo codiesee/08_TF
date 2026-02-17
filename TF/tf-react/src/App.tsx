@@ -1,6 +1,6 @@
 import React, { useCallback } from 'react';
 import { useAppContext } from './context/AppContext';
-import { AthleticsMap, AthleteSearch, EventSelector, Histogram, InfoPanel } from './components';
+import { AthleticsMap, AthleteSearch, EventSelector, Histogram, InfoPanel, LocationPerformances } from './components';
 import { useRankHistogram, useDateHistogram, useAgeHistogram } from './hooks/useHistogramData';
 import { fetchEventData } from './services/api';
 import './App.css';
@@ -78,6 +78,7 @@ function App() {
       <div className="app-content">
         <div className="left-column">
           <InfoPanel records={records} />
+          <LocationPerformances records={records} />
         </div>
 
         <div className="main-column">

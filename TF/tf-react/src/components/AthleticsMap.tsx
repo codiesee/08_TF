@@ -59,20 +59,6 @@ const MarkerClusterLayer: React.FC<MarkerClusterLayerProps> = memo(({ records })
   const markersRef = useRef<L.MarkerClusterGroup | null>(null);
   const { highlight } = useHighlight();
 
-  // Group records by city for clustering
-  const cityGroups = useMemo(() => {
-    const groups: Map<string, AthleteRecord[]> = new Map();
-    
-    records.forEach(record => {
-      if (!record.city) return;
-      const existing = groups.get(record.city) || [];
-      existing.push(record);
-      groups.set(record.city, existing);
-    });
-    
-    return groups;
-  }, [records]);
-
   useEffect(() => {
     // Clear existing markers
     if (markersRef.current) {
@@ -88,24 +74,22 @@ const MarkerClusterLayer: React.FC<MarkerClusterLayerProps> = memo(({ records })
       zoomToBoundsOnClick: true,
     });
 
-    // Add markers for each city
-    cityGroups.forEach((cityRecords, city) => {
-      const coords = getCityCoordinates(city);
+    // Add one marker per performance record (so cluster counts show performances)
+    records.forEach(record => {
+      if (!record.city) return;
+      
+      const coords = getCityCoordinates(record.city);
       if (!coords) return;
 
-      // Create popup content
-      const popupContent = cityRecords.length <= 5
-        ? cityRecords.map(r => `<b>#${r.rank}</b> ${r.name} (${r.time})`).join('<br>')
-        : `<b>${city}</b><br>${cityRecords.length} performances`;
+      // Create popup content for this specific performance
+      const popupContent = `<b>#${record.rank}</b> ${record.name}<br>${record.time} - ${record.city}`;
 
       const marker = L.marker([coords.lat, coords.lng])
         .bindPopup(popupContent);
 
-      // Add click handler for single-record cities
+      // Add click handler to highlight this record
       marker.on('click', () => {
-        if (cityRecords.length === 1) {
-          highlight(cityRecords[0].id);
-        }
+        highlight(record.id);
       });
 
       markers.addLayer(marker);
@@ -119,7 +103,7 @@ const MarkerClusterLayer: React.FC<MarkerClusterLayerProps> = memo(({ records })
         map.removeLayer(markersRef.current);
       }
     };
-  }, [map, cityGroups, highlight]);
+  }, [map, records, highlight]);
 
   return null;
 });
