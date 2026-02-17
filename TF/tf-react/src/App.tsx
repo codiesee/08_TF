@@ -1,6 +1,6 @@
 import React, { useCallback } from 'react';
 import { useAppContext } from './context/AppContext';
-import { AthleticsMap, AthleteSearch, EventSelector, Histogram, InfoPanel, LocationPerformances } from './components';
+import { AthleticsMap, AthleteSearch, EventSelector, ZoomableHistogram, InfoPanel, LocationPerformances } from './components';
 import { useRankHistogram, useDateHistogram, useAgeHistogram } from './hooks/useHistogramData';
 import { fetchEventData } from './services/api';
 import './App.css';
@@ -85,25 +85,35 @@ function App() {
           <AthleticsMap records={records} />
           
           <div className="histograms-container">
-            <Histogram
+            <ZoomableHistogram
               title="By Rank (left = fastest)"
               bars={rankHistogram.bars}
               labels={rankHistogram.labels}
               className="histogram-rank"
+              xDomain={[0, records.length]}
+              xTickFormat={(v) => `#${Math.round(v)}`}
             />
             
-            <Histogram
+            <ZoomableHistogram
               title="By Date (left = oldest)"
               bars={dateHistogram.bars}
               labels={dateHistogram.labels}
               className="histogram-date"
+              xDomain={dateHistogram.bars.length > 0 
+                ? [dateHistogram.minValue, dateHistogram.maxValue] 
+                : undefined}
+              xTickFormat={(v) => String(Math.floor(v / 360))}
             />
             
-            <Histogram
+            <ZoomableHistogram
               title="By Age at Event (left = youngest)"
               bars={ageHistogram.bars}
               labels={ageHistogram.labels}
               className="histogram-age"
+              xDomain={ageHistogram.bars.length > 0 
+                ? [ageHistogram.minValue, ageHistogram.maxValue] 
+                : undefined}
+              xTickFormat={(v) => `${Math.round(v / 360)}y`}
             />
           </div>
         </div>

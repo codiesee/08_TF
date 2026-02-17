@@ -4,3 +4,4 @@ export { EventSelector } from './EventSelector';
 export { Histogram } from './Histogram';
 export { InfoPanel } from './InfoPanel';
 export { LocationPerformances } from './LocationPerformances';
+export { ZoomableHistogram } from './ZoomableHistogram';

@@ -46,7 +46,7 @@ export function useRankHistogram(records: AthleteRecord[], eventCode: string = '
         index,
         heightPercent,
         leftPercent: (index / records.length) * 100,
-        value: record.timeSeconds,
+        value: index, // For rank histogram, x-axis value is the index (rank position)
       };
     });
 

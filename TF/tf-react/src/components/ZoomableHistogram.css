@@ -1,0 +1,101 @@
+.zoomable-histogram-container {
+  width: 100%;
+  margin-bottom: 20px;
+  position: relative;
+  box-sizing: border-box;
+}
+
+.zoomable-histogram-container .histogram-title {
+  font-size: 13px;
+  font-weight: bold;
+  color: #333;
+  margin: 0 0 2px 0;
+  padding-left: 5px;
+}
+
+.zoomable-histogram-container .histogram-instructions {
+  font-size: 9px;
+  color: #888;
+  margin: 0 0 5px 0;
+  padding-left: 5px;
+}
+
+.zoomable-histogram-container .histogram-svg {
+  width: 100%;
+  height: 150px;
+  display: block;
+  background: linear-gradient(to bottom, rgba(0,0,0,0.02) 0%, rgba(0,0,0,0.05) 100%);
+  cursor: grab;
+}
+
+.zoomable-histogram-container .histogram-svg:active {
+  cursor: grabbing;
+}
+
+/* Bar styles */
+.zoomable-histogram-container .bar {
+  fill: #888;
+  transition: fill 0.1s ease;
+}
+
+.zoomable-histogram-container .bar.hovered {
+  fill: #404040 !important;
+}
+
+.zoomable-histogram-container .bar.highlighted {
+  fill: #ff0000 !important;
+}
+
+.zoomable-histogram-container .bar.secondary-highlight {
+  fill: #e8e8a0 !important;
+}
+
+/* X-axis styling */
+.zoomable-histogram-container .x-axis path,
+.zoomable-histogram-container .x-axis line {
+  stroke: #ccc;
+}
+
+.zoomable-histogram-container .x-axis text {
+  font-size: 9px;
+  fill: #666;
+}
+
+/* Tooltip styles */
+.zoomable-histogram-container .histogram-tooltip {
+  position: fixed;
+  background: rgba(255, 255, 255, 0.97);
+  border: 1px solid #333;
+  border-radius: 4px;
+  padding: 8px 12px;
+  font-size: 11px;
+  pointer-events: none;
+  z-index: 10000;
+  box-shadow: 2px 2px 8px rgba(0,0,0,0.25);
+  max-width: 300px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.zoomable-histogram-container .histogram-tooltip strong {
+  display: block;
+  margin-bottom: 2px;
+  font-size: 12px;
+  color: #000;
+}
+
+.zoomable-histogram-container .histogram-tooltip span {
+  color: #444;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .zoomable-histogram-container .histogram-svg {
+    height: 120px;
+  }
+  
+  .zoomable-histogram-container .x-axis text {
+    font-size: 8px;
+  }
+}
