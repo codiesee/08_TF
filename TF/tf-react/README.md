@@ -1,46 +1,121 @@
-# Getting Started with Create React App
+# Track & Field All-Time Rankings
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+An interactive data visualization of all-time athletic performance rankings. Features an interactive map showing athlete birthplaces, a histogram displaying performance distributions, and detailed athlete information.
+
+## Features
+
+- 🗺️ **Interactive Map**: View athlete birthplaces on a Leaflet map with marker clustering
+- 📊 **Performance Histogram**: Visualize ranking distributions with D3.js
+- 🔍 **Athlete Search**: Search for specific athletes
+- 📋 **Event Selection**: Browse different track & field events (sprints, distance, field events)
+- 📍 **Location Details**: See all performances from a specific location
+
+## Prerequisites
+
+- **Node.js** (v16 or higher)
+- **npm** (v8 or higher)
+- **PHP** (v8.0 or higher) - for the backend API
+
+## Quick Start
+
+This project requires **two servers** to run: a React development server and a PHP backend server.
+
+### 1. Install Dependencies
+
+```bash
+cd tf-react
+npm install
+```
+
+### 2. Start the PHP Backend Server
+
+Open a terminal and run:
+
+```bash
+cd tf-react
+php -S localhost:8080
+```
+
+This starts the PHP API server on port 8080, which serves athlete data from the `api/` directory.
+
+### 3. Start the React Development Server
+
+Open a **separate terminal** and run:
+
+```bash
+cd tf-react
+npm start
+```
+
+This starts the React app on port 3000.
+
+### 4. Open the Application
+
+Visit [http://localhost:3000](http://localhost:3000) in your browser.
+
+## Project Structure
+
+```
+tf-react/
+├── api/                    # PHP backend API
+│   ├── scraper.php         # Main API endpoint
+│   └── cache/              # Cached JSON data for events
+├── public/                 # Static assets
+├── src/
+│   ├── components/         # React components
+│   │   ├── AthleticsMap    # Leaflet map component
+│   │   ├── Histogram       # D3.js histogram
+│   │   ├── EventSelector   # Event dropdown
+│   │   ├── AthleteSearch   # Search functionality
+│   │   └── InfoPanel       # Athlete details panel
+│   ├── context/            # React context for state management
+│   ├── services/           # API service layer
+│   ├── types/              # TypeScript type definitions
+│   └── config/             # Configuration constants
+└── build/                  # Production build output
+```
 
 ## Available Scripts
 
-In the project directory, you can run:
+| Command | Description |
+|---------|-------------|
+| `npm start` | Start development server on port 3000 |
+| `npm run build` | Build for production |
+| `npm test` | Run tests |
 
-### `npm start`
+## API Configuration
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in the browser.
+The React app connects to the PHP backend at `http://localhost:8080/api`. This is configured in:
+- `src/services/api.ts` - API base URL
+- `src/setupProxy.js` - Development proxy configuration
 
-The page will reload if you make edits.\
-You will also see any lint errors in the console.
+## Troubleshooting
 
-### `npm test`
+### "Failed to fetch" Error
 
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
+This usually means the PHP backend server is not running. Make sure to start it:
 
-### `npm run build`
+```bash
+php -S localhost:8080
+```
 
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
+### Port Already in Use
 
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
+If port 8080 is already in use, find and kill the process:
 
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
+```bash
+lsof -i :8080
+kill -9 <PID>
+```
 
-### `npm run eject`
+### CORS Issues
 
-**Note: this is a one-way operation. Once you `eject`, you can’t go back!**
+The PHP backend includes CORS headers. If you still encounter issues, ensure you're accessing the app via `localhost:3000` (not `127.0.0.1`).
 
-If you aren’t satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
+## Tech Stack
 
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you’re on your own.
-
-You don’t have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn’t feel obligated to use this feature. However we understand that this tool wouldn’t be useful if you couldn’t customize it when you are ready for it.
-
-## Learn More
-
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
+- **Frontend**: React 19, TypeScript, D3.js, Leaflet
+- **Backend**: PHP
+- **Mapping**: Leaflet with MarkerCluster plugin
+- **Charts**: D3.js
+- **Build Tool**: Create React App
