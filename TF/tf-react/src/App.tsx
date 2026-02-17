@@ -1,6 +1,6 @@
 import React, { useCallback } from 'react';
 import { useAppContext } from './context/AppContext';
-import { AthleticsMap, EventSelector, Histogram, InfoPanel } from './components';
+import { AthleticsMap, AthleteSearch, EventSelector, Histogram, InfoPanel } from './components';
 import { useRankHistogram, useDateHistogram, useAgeHistogram } from './hooks/useHistogramData';
 import { fetchEventData } from './services/api';
 import './App.css';
@@ -64,6 +64,9 @@ function App() {
           onEventChange={handleEventChange}
           isLoading={isLoading}
         />
+        {records.length > 0 && (
+          <AthleteSearch records={records} />
+        )}
       </div>
 
       {error && (
