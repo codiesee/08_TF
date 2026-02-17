@@ -15,11 +15,20 @@ import './AthleticsMap.css';
 import icon from 'leaflet/dist/images/marker-icon.png';
 import iconShadow from 'leaflet/dist/images/marker-shadow.png';
 
-const DefaultIcon = L.icon({
-  iconUrl: icon,
-  shadowUrl: iconShadow,
-  iconSize: [25, 41],
-  iconAnchor: [12, 41],
+// Default marker icon (circle style to match clusters)
+const DefaultIcon = L.divIcon({
+  className: 'default-marker',
+  html: `<div style="
+    background-color: #3388ff9b;
+    width: 20px;
+    height: 20px;
+    border-radius: 50%;
+    border: 2px solid #ffffff84;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+  "></div>`,
+  iconSize: [20, 20],
+  iconAnchor: [10, 10],
+  popupAnchor: [0, -10],
 });
 
 // Highlighted marker icon (red) - using divIcon for reliability
@@ -27,16 +36,15 @@ const HighlightedIcon = L.divIcon({
   className: 'highlighted-marker',
   html: `<div style="
     background-color: #ff0000;
-    width: 30px;
-    height: 30px;
-    border-radius: 50% 50% 50% 0;
-    transform: rotate(-45deg);
-    border: 3px solid #cc0000;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    border: 3px solid #fff;
     box-shadow: 0 0 10px rgba(255,0,0,0.5);
   "></div>`,
-  iconSize: [30, 30],
-  iconAnchor: [15, 30],
-  popupAnchor: [0, -30],
+  iconSize: [26, 26],
+  iconAnchor: [13, 13],
+  popupAnchor: [0, -13],
 });
 
 L.Marker.prototype.options.icon = DefaultIcon;
@@ -138,12 +146,41 @@ const SelectedMarkerLayer: React.FC<SelectedMarkerLayerProps> = memo(({ records 
     return getCityCoordinates(highlightedRecord.city);
   }, [highlightedRecord]);
 
-  if (!highlightedRecord || !coords) return null;
+  // Create a custom icon with the city label
+  const labeledIcon = useMemo(() => {
+    if (!highlightedRecord?.city) return null;
+    return L.divIcon({
+      className: 'highlighted-marker-labeled',
+      html: `<div style="display: flex; align-items: center; gap: 6px;">
+        <div style="
+          background-color: #ff0000;
+          width: 26px;
+          height: 26px;
+          border-radius: 50%;
+          border: 3px solid #fff;
+          box-shadow: 0 0 10px rgba(255,0,0,0.5);
+          flex-shrink: 0;
+        "></div>
+        <div style="
+          font-size: 13px;
+          font-weight: bold;
+          color: #ff0000;
+          white-space: nowrap;
+          text-shadow: -1px -1px 0 #fff, 1px -1px 0 #fff, -1px 1px 0 #fff, 1px 1px 0 #fff, 0 -1px 0 #fff, 0 1px 0 #fff, -1px 0 0 #fff, 1px 0 0 #fff;
+        ">${highlightedRecord.city}</div>
+      </div>`,
+      iconSize: [150, 26],
+      iconAnchor: [13, 13],
+      popupAnchor: [0, -13],
+    });
+  }, [highlightedRecord]);
+
+  if (!highlightedRecord || !coords || !labeledIcon) return null;
 
   return (
     <Marker 
       position={[coords.lat, coords.lng]} 
-      icon={HighlightedIcon}
+      icon={labeledIcon}
       zIndexOffset={1000}
     >
       <Popup>
