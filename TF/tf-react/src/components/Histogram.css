@@ -29,6 +29,12 @@
   cursor: pointer;
 }
 
+.histogram-bar.hovered {
+  background-color: #404040 !important;
+  z-index: 800;
+  min-width: 2px;
+}
+
 .histogram-bar.highlighted {
   background-color: #ff0000 !important;
   z-index: 1000;

@@ -7,13 +7,9 @@ import 'leaflet.markercluster/dist/MarkerCluster.Default.css';
 import 'leaflet.markercluster';
 import { AthleteRecord } from '../types';
 import { getCityCoordinates } from '../data';
-import { useHighlight, useHighlightedRecordId } from '../context/AppContext';
+import { useHighlight, useHighlightedRecordId, useHover, useHoveredRecordId } from '../context/AppContext';
 import { MAP_CENTER, MAP_ZOOM, MAP_TILE_URL, MAP_ATTRIBUTION } from '../config/constants';
 import './AthleticsMap.css';
-
-// Fix Leaflet default marker icon issue with webpack
-import icon from 'leaflet/dist/images/marker-icon.png';
-import iconShadow from 'leaflet/dist/images/marker-shadow.png';
 
 // Default marker icon (circle style to match clusters)
 const DefaultIcon = L.divIcon({
@@ -31,22 +27,6 @@ const DefaultIcon = L.divIcon({
   popupAnchor: [0, -10],
 });
 
-// Highlighted marker icon (red) - using divIcon for reliability
-const HighlightedIcon = L.divIcon({
-  className: 'highlighted-marker',
-  html: `<div style="
-    background-color: #ff0000;
-    width: 26px;
-    height: 26px;
-    border-radius: 50%;
-    border: 3px solid #fff;
-    box-shadow: 0 0 10px rgba(255,0,0,0.5);
-  "></div>`,
-  iconSize: [26, 26],
-  iconAnchor: [13, 13],
-  popupAnchor: [0, -13],
-});
-
 L.Marker.prototype.options.icon = DefaultIcon;
 
 interface MarkerClusterLayerProps {
@@ -58,6 +38,7 @@ const MarkerClusterLayer: React.FC<MarkerClusterLayerProps> = memo(({ records })
   const map = useMap();
   const markersRef = useRef<L.MarkerClusterGroup | null>(null);
   const { highlight } = useHighlight();
+  const { hover } = useHover();
 
   useEffect(() => {
     // Clear existing markers
@@ -92,6 +73,14 @@ const MarkerClusterLayer: React.FC<MarkerClusterLayerProps> = memo(({ records })
         highlight(record.id);
       });
 
+      // Add hover handlers
+      marker.on('mouseover', () => {
+        hover(record.id);
+      });
+      marker.on('mouseout', () => {
+        hover(null);
+      });
+
       markers.addLayer(marker);
     });
 
@@ -103,7 +92,7 @@ const MarkerClusterLayer: React.FC<MarkerClusterLayerProps> = memo(({ records })
         map.removeLayer(markersRef.current);
       }
     };
-  }, [map, records, highlight]);
+  }, [map, records, highlight, hover]);
 
   return null;
 });
@@ -181,6 +170,69 @@ const SelectedMarkerLayer: React.FC<SelectedMarkerLayerProps> = memo(({ records 
 
 SelectedMarkerLayer.displayName = 'SelectedMarkerLayer';
 
+// Component to show the hovered event marker (dark gray)
+interface HoveredMarkerLayerProps {
+  records: AthleteRecord[];
+}
+
+const HoveredMarkerLayer: React.FC<HoveredMarkerLayerProps> = memo(({ records }) => {
+  const hoveredRecordId = useHoveredRecordId();
+  const highlightedRecordId = useHighlightedRecordId();
+  
+  // Find the hovered record (but don't show if it's also highlighted)
+  const hoveredRecord = useMemo(() => {
+    if (hoveredRecordId === null || hoveredRecordId === highlightedRecordId) return null;
+    return records.find(r => r.id === hoveredRecordId) || null;
+  }, [records, hoveredRecordId, highlightedRecordId]);
+
+  // Get coordinates for the hovered record
+  const coords = useMemo(() => {
+    if (!hoveredRecord?.city) return null;
+    return getCityCoordinates(hoveredRecord.city);
+  }, [hoveredRecord]);
+
+  // Create a custom icon with dark gray color and city label
+  const hoveredIcon = useMemo(() => {
+    if (!hoveredRecord?.city) return null;
+    return L.divIcon({
+      className: 'hovered-marker-labeled',
+      html: `<div style="display: flex; align-items: center; gap: 6px;">
+        <div style="
+          background-color: #404040;
+          width: 22px;
+          height: 22px;
+          border-radius: 50%;
+          border: 2px solid #fff;
+          box-shadow: 0 0 8px rgba(0,0,0,0.4);
+          flex-shrink: 0;
+        "></div>
+        <div style="
+          font-size: 12px;
+          font-weight: bold;
+          color: #404040;
+          white-space: nowrap;
+          text-shadow: -1px -1px 0 #fff, 1px -1px 0 #fff, -1px 1px 0 #fff, 1px 1px 0 #fff, 0 -1px 0 #fff, 0 1px 0 #fff, -1px 0 0 #fff, 1px 0 0 #fff;
+        ">${hoveredRecord.city}</div>
+      </div>`,
+      iconSize: [150, 22],
+      iconAnchor: [11, 11],
+      popupAnchor: [0, -11],
+    });
+  }, [hoveredRecord]);
+
+  if (!hoveredRecord || !coords || !hoveredIcon) return null;
+
+  return (
+    <Marker 
+      position={[coords.lat, coords.lng]} 
+      icon={hoveredIcon}
+      zIndexOffset={900}
+    />
+  );
+});
+
+HoveredMarkerLayer.displayName = 'HoveredMarkerLayer';
+
 interface AthleticsMapProps {
   records: AthleteRecord[];
 }
@@ -199,6 +251,7 @@ export const AthleticsMap: React.FC<AthleticsMapProps> = memo(({ records }) => {
           url={MAP_TILE_URL}
         />
         <MarkerClusterLayer records={records} />
+        <HoveredMarkerLayer records={records} />
         <SelectedMarkerLayer records={records} />
       </MapContainer>
     </div>

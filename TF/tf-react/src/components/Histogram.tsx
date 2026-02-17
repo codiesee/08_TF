@@ -1,6 +1,6 @@
 import React, { memo, useCallback, useRef, useMemo } from 'react';
 import { AthleteRecord } from '../types';
-import { useHighlight } from '../context/AppContext';
+import { useHighlight, useHover } from '../context/AppContext';
 import './Histogram.css';
 
 interface HistogramBarProps {
@@ -10,8 +10,11 @@ interface HistogramBarProps {
   leftPercent: number;
   barWidth: number;
   isHighlighted: boolean;
+  isHovered: boolean;
   isSecondaryHighlight: boolean;
   onClick: (id: number) => void;
+  onMouseEnter: (id: number) => void;
+  onMouseLeave: () => void;
 }
 
 // Memoized bar component for performance
@@ -22,14 +25,21 @@ const HistogramBar = memo<HistogramBarProps>(({
   leftPercent,
   barWidth,
   isHighlighted,
+  isHovered,
   isSecondaryHighlight,
   onClick,
+  onMouseEnter,
+  onMouseLeave,
 }) => {
   const handleClick = useCallback(() => {
     onClick(record.id);
   }, [onClick, record.id]);
 
-  const className = `histogram-bar ${isHighlighted ? 'highlighted' : ''} ${isSecondaryHighlight ? 'secondary-highlight' : ''}`;
+  const handleMouseEnter = useCallback(() => {
+    onMouseEnter(record.id);
+  }, [onMouseEnter, record.id]);
+
+  const className = `histogram-bar${isHighlighted ? ' highlighted' : ''}${isHovered ? ' hovered' : ''}${isSecondaryHighlight ? ' secondary-highlight' : ''}`;
 
   return (
     <div
@@ -41,6 +51,8 @@ const HistogramBar = memo<HistogramBarProps>(({
         bottom: 0,
       }}
       onClick={handleClick}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={onMouseLeave}
       data-rank={record.rank}
       data-name={record.name}
       data-time={record.time}
@@ -52,6 +64,7 @@ const HistogramBar = memo<HistogramBarProps>(({
   // Custom comparison for performance - only re-render if these change
   return (
     prevProps.isHighlighted === nextProps.isHighlighted &&
+    prevProps.isHovered === nextProps.isHovered &&
     prevProps.isSecondaryHighlight === nextProps.isSecondaryHighlight &&
     prevProps.heightPercent === nextProps.heightPercent &&
     prevProps.leftPercent === nextProps.leftPercent &&
@@ -82,6 +95,7 @@ export const Histogram: React.FC<HistogramProps> = memo(({
   className = '',
 }) => {
   const { highlightedRecordId, highlight } = useHighlight();
+  const { hoveredRecordId, hover } = useHover();
   const containerRef = useRef<HTMLDivElement>(null);
 
   // Calculate bar width based on number of bars
@@ -103,6 +117,14 @@ export const Histogram: React.FC<HistogramProps> = memo(({
     }
   }, [highlight, highlightedRecordId]);
 
+  const handleMouseEnter = useCallback((id: number) => {
+    hover(id);
+  }, [hover]);
+
+  const handleMouseLeave = useCallback(() => {
+    hover(null);
+  }, [hover]);
+
   // Click on empty space clears selection
   const handleBackgroundClick = useCallback((e: React.MouseEvent) => {
     if (e.target === e.currentTarget) {
@@ -116,6 +138,7 @@ export const Histogram: React.FC<HistogramProps> = memo(({
       <div className="histogram-chart" ref={containerRef} onClick={handleBackgroundClick}>
         {bars.map((bar) => {
           const isHighlighted = highlightedRecordId === bar.record.id;
+          const isHovered = hoveredRecordId === bar.record.id;
           const isSecondaryHighlight = !isHighlighted && 
             highlightedAthleteName !== null && 
             bar.record.name === highlightedAthleteName;
@@ -129,8 +152,11 @@ export const Histogram: React.FC<HistogramProps> = memo(({
               leftPercent={bar.leftPercent}
               barWidth={barWidth}
               isHighlighted={isHighlighted}
+              isHovered={isHovered}
               isSecondaryHighlight={isSecondaryHighlight}
               onClick={handleClick}
+              onMouseEnter={handleMouseEnter}
+              onMouseLeave={handleMouseLeave}
             />
           );
         })}
